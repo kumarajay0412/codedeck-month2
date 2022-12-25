@@ -53,9 +53,88 @@ function Playground() {
     const res = await axios.request(options)
     return res?.data?.token
   }
-    return (
-      <div>Playground</div>
-    )
+
+  const getOutput = async (token) => {
+    const options = {
+      method: 'GET',
+      url: 'https://judge0-ce.p.rapidapi.com/submissions/' + token,
+      params: { base64_encoded: 'true', fields: '*' },
+      headers: {
+        'X-RapidAPI-Key': 'b4e5c5a05fmsh9adf6ec091523f8p165338jsncc58f31c26e1',
+        'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+      }
+    }
+    const res = await axios.request(options)
+
+    if (res?.data?.status_id <= 2) {
+      const res2 = await getOutput(token)
+      return res2.data
+    }
+    return res?.data
   }
 
-  export default Playground
+  const runCode = async () => {
+    openModal({
+      show: true,
+      modalType: 6,
+      identifiers: {
+        folderId: "",
+        cardId: ""
+      }
+    });
+    const language_id = languageMap[currentLanguage]
+    const source_code = encode(currentCode)
+    const stdin = encode(currentInput)
+    const token = await postSubmission(language_id, source_code, stdin)
+
+    const res = await getOutput(token)
+    const status_name = res.status.description
+    const decoded_output = decode(res.stdout ? res.stdout : "")
+    const decoded_error = decode(res.stderr ? res.stderr : "")
+    const decoded_compile_output = decode(res.compile_output ? res.compile_output : "")
+
+    let final_output = ''
+    if (res.status_id !== 3) {
+      if (decoded_compile_output = "") {
+        final_output = decoded_output
+      }
+      else {
+        final_output = decoded_compile_output
+      }
+    }
+    else {
+      final_output = decoded_error
+    }
+    setCurrentOutput(status_name + "\n\n" + final_output)
+    closeModal();
+  }
+  const getFile = (e, setState) => {
+    const input = e.target
+    if ("files" in input && input.files.length > 0) {
+      placeFileContent(
+        input.files[0], setState
+      )
+    }
+  }
+  const placeFileContent = (file, setState) => {
+    readFileContent(file).then(content => {
+      setState(content)
+    }).catch(error => console.log(error))
+  }
+  const readFileContent = (file) => {
+    const reader = new FileReader()
+    return new Promise((resolve, reject) => {
+      reader.onload = event => resolve(event.target.result);
+      reader.onerror = error => reject(error);
+      reader.readAsText(file)
+    })
+  }
+
+
+
+  return (
+    <div>Playground</div>
+  )
+}
+
+export default Playground
