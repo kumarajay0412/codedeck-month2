@@ -65,7 +65,7 @@ function RightPaneHomeScreen() {
                                 <div onClick={(e) => {
                                     e.stopPropagation(); //stop click propagation from child to parent
                                     console.log(folderId, playgroundId)
-                                    // navigate(`/playground/${folderId}/${playgroundId}`)
+                                    navigate(`/code/${folderId}/${playgroundId}`)
                                 }}
                                     className='flex items-center justify-between'>
                                     <div className='flex gap-4 items-center'>
