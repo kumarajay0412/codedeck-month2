@@ -7,13 +7,25 @@ import Card from '../Card';
 import { ModalContext } from "../../Context/ModalContext";
 import { PlaygroundContext } from "../../Context/PlaygroundContext";
 import { useNavigate } from "react-router-dom";
+import { auth } from '../../firebaseConfig'
+import { useAuthState } from 'react-firebase-hooks/auth'
 
 function RightPaneHomeScreen() {
     const navigate = useNavigate();
+    const [user] = useAuthState(auth);
 
     const { openModal } = useContext(ModalContext);
     const { folders, deleteFolder, deleteCard } = useContext(PlaygroundContext);
 
+    const logout = (e) => {
+        auth.signOut().then(() => {
+            window.localStorage.clear();
+            console.log("Sign-out successful.")
+        }).catch((error) => {
+            console.log(error)
+            console.log("Sign-out Unsuccessful.")
+        });
+    }
 
     return (
         <div className='border-black h-screen p-8'>
@@ -27,10 +39,20 @@ function RightPaneHomeScreen() {
                         cardId: "",
                     }
                 })}><span className='font-semibold text-2xl'>+</span> New Folder</h4>
+
+                <h4> <span className='font-semibold text-2xl'></span> {user ? <span onClick={()=>logout()} >Logout</span> : <span onClick={() => openModal({
+                    show: true,
+                    modalType: 7,
+                    identifiers: {
+                        folderId: "",
+                        cardId: "",
+                    }
+                })}>Login</span>}</h4>
+
             </div>
             <hr class="mb-12 mt-4 bg-black" />
-
-            {Object.entries(folders).map(([folderId, folder]) => (
+            {console.log(folders)}
+            {folders && Object.entries(folders).map(([folderId, folder]) => (
                 <div className='flex-col flex my-8'>
                     <div className='flex justify-between placeholder:mt-8 items-center'>
                         <div className='flex gap-4 items-center'>
@@ -60,12 +82,12 @@ function RightPaneHomeScreen() {
                     </div>
                     <hr class="mb-4 mt-4 bg-black" />
                     <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
-                        {folder['playgrounds'] && Object.entries(folder['playgrounds'])?.map(([playgroundId, playground]) => (
+                        {Object.entries(folder['playgrounds']).map(([playgroundId, playground]) => (
                             <Card key={playgroundId}>
                                 <div onClick={(e) => {
                                     e.stopPropagation(); //stop click propagation from child to parent
                                     console.log(folderId, playgroundId)
-                                    navigate(`/code/${folderId}/${playgroundId}`)
+                                    navigate(`/playground/${folderId}/${playgroundId}`)
                                 }}
                                     className='flex items-center justify-between'>
                                     <div className='flex gap-4 items-center'>
@@ -76,22 +98,17 @@ function RightPaneHomeScreen() {
                                         </div>
                                     </div>
                                     <div className='flex gap-4 items-center' onClick={(e) => {
-                                        
+                                        console.log('clicked')
                                         e.stopPropagation(); //stop click propagation from child to parent
                                     }}>
-                                        <BiEditAlt size={'1.2em'} onClick={() => 
-                                        {
-                                          console.log('clicked')
-                                          openModal({
+                                        <BiEditAlt size={'1.2em'} onClick={() => openModal({
                                             show: true,
                                             modalType: 5,
                                             identifiers: {
                                                 folderId: folderId,
                                                 cardId: playgroundId,
                                             }
-                                        })}
-                                        
-                                        } />
+                                        })} />
                                         <IoTrashOutline size={'1.2em'} onClick={() => deleteCard(folderId, playgroundId)} />
                                     </div>
                                 </div>
